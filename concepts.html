@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Peta Konsep - Knowledge Graph</title>
+
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/vis-data@latest/peer/umd/vis-data.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="https://visjs.github.io/vis-network/standalone/umd/vis-network.min.js"
+    ></script>
+
+    <style type="text/css">
+      table tr:hover td {
+      background: #efefef;
+      cursor: pointer;
+      }
+      table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      }
+      #mynetwork {
+        width: auto;
+        height: 300px;
+        bottom: 0;
+        border: 1px solid lightgray;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+          "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+          "Helvetica Neue", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      code {
+        font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+          monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Peta Konsep - Knowledge Graph</h1>
+
+    <label>
+      Pilih Artikel :
+      
+      <span>
+        <label>
+          <input type="checkbox" name="nodesFilter" value="3" checked/>
+          <span>1</span>
+        </label>
+      </span>
+      
+      <span>
+        <label>
+          <input type="checkbox" name="nodesFilter" value="5" checked/>
+          <span>2</span>
+        </label>
+      </span>
+      
+      <span>
+        <label>
+          <input type="checkbox" name="nodesFilter" value="8" checked/>
+          <span>3</span>
+        </label>
+      </span>
+      <span>
+        <label>
+          <input type="checkbox" name="nodesFilter" value="10" checked/>
+          <span>4</span>
+        </label>
+      </span>
+
+      <span>
+        <label>
+          <input type="checkbox" name="nodesFilter" value="11" checked/>
+          <span>5</span>
+        </label>
+      </span>
+      
+      <span>
+        <label>
+          <input type="checkbox" name="nodesFilter" value="15" checked/>
+          <span>6</span>
+        </label>
+      </span>
+    </label>
+    <br/>
+    <br/>
+    <label>
+      Pilih Hubungan antar Artikel :
+      <span>
+        <label>
+          <input type="checkbox" name="edgesFilter" value="objective" />
+          <span style="color: red">Tujuan Penelitian</span>
+        </label>
+      </span>
+      <span>
+        <label>
+          <input type="checkbox" name="edgesFilter" value="method" />
+          <span style="color: green">Metodologi Penelitian</span>
+        </label>
+      </span>
+      <span>
+        <label>
+          <input type="checkbox" name="edgesFilter" value="background" />
+          <span style="color: blue">Latar Belakang Penelitian</span>
+        </label>
+      </span>
+    </label>
+    <br /><br />
+    <div id="mynetwork"></div>
+    <br />
+    <div id="popup-event"></div>
+    <script type="text/javascript">
+      //for nodes
+      const nodeFilters = document.getElementsByName("nodesFilter");
+      const edgeFilters = document.getElementsByName("edgesFilter");
+
+      function startNetwork(data) {
+        const container = document.getElementById("mynetwork");
+        const options = {
+          autoResize: true,
+          height: "100%",
+          width: "100%",
+          manipulation: false,
+          edges: {
+            font: {
+              size: 9,
+              align: "horizontal",
+              multi: true,
+            },
+            widthConstraint: {
+              maximum: 100,
+            },
+            physics: true,
+          },
+          nodes: {
+            shape: "box",
+            font: {
+              size: 10,
+              align: "middle",
+              multi: "html",
+            },
+            margin: 3,
+            widthConstraint: {
+              maximum: 250,
+            },
+          },
+          physics: {
+            enabled: true,
+            barnesHut: {
+              springLength: 10,
+              springConstant: 0,
+              avoidOverlap: 0.1,
+            },
+            solver: "barnesHut",
+            stabilization: {
+              enabled: true,
+              iterations: 10,
+              updateInterval: 10,
+              onlyDynamicEdges: false,
+              fit: true,
+            },
+            timestep: 0.5,
+            adaptiveTimestep: true,
+            wind: { x: 0, y: 0 },
+          },
+          layout: {
+            randomSeed: 1,
+            improvedLayout: true,
+          },
+          interaction: {
+            navigationButtons: true,
+            keyboard: true,
+          },
+        };
+        var network = new vis.Network(container, data, options);
+
+        network.on("click", function (properties) {
+          var nodeIDs = properties.nodes;
+          clickedNodes = nodes.get(nodeIDs);
+
+          var edgesIDs = properties.edges;
+          clickedEdges = edges.get(edgesIDs);
+
+          var clickedType = 0;
+          if (
+            typeof clickedEdges != "undefined" &&
+            clickedEdges != null &&
+            clickedEdges.length != null &&
+            clickedEdges.length > 0
+          ) {
+            console.log("Edge:" + clickedEdges);
+            clickedType = 2;
+          }
+
+          if (
+            typeof clickedNodes != "undefined" &&
+            clickedNodes != null &&
+            clickedNodes.length != null &&
+            clickedNodes.length > 0
+          ) {
+            console.log("Node:" + clickedNodes);
+            clickedType++;
+          }
+
+          //NODE ONLY
+          if (clickedType == 1) {
+            console.log(clickedNodes[0].id);
+            //Do you Jquery here for Nodes
+            showNode(clickedNodes[0]);
+          }
+
+          //EDGE ONLY
+          if (clickedType == 2) {
+            console.log(clickedEdges[0].id);
+            showEdge(clickedEdges[0]);
+            //Do you Jquery here for Edge
+          }
+          //NODE WITH EDGE
+          if (clickedType == 3) {
+            //alert("single node or with edge ");
+            console.log(clickedNodes[0].id);
+            console.log(clickedEdges[0].id);
+
+            //Do you Jquery here for Nodes
+            showNode(clickedNodes[0]);
+          }
+
+          function showNode(clickedNode) {
+                          // 1. Create a new XMLHttpRequest instance
+            
+              var url = new URL(window.location.href);
+              var c = url.searchParams.get("id");
+              console.log(c);
+              const xhr = new XMLHttpRequest();
+
+              // 2. Define the request method and URL
+              xhr.open('POST', 'https://sre.realityideas.com/save-knowledge-content', true);
+
+              // 3. Set request headers (if needed)
+              xhr.setRequestHeader('Content-Type', 'application/json');
+
+              // 4. Define the response handler
+              xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                  // Handle the server response
+                  console.log(xhr.responseText);
+                }
+              };
+
+              // 5. Send the request with data payload
+              const data = JSON.stringify({user_id:c, action: clickedNode.label, text: "clicked Node" });
+              xhr.send(data);
+            // console.log("API node click: ", clickedNode.label);
+            
+            document.getElementById("popup-event").innerHTML =
+              "<table border='1' style='font-size:11px'>" +
+              "<tr>" +
+              "<td>Kode</td>" +
+              "<td>" +
+              clickedNode.label +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Judul</td>" +
+              "<td>" +
+              clickedNode.title +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Tujuan</td>" +
+              "<td>" +
+              clickedNode.att_goal +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Latar Belakang</td>" +
+              "<td>" +
+              clickedNode.att_background +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Metodologi</td>" +
+              "<td>" +
+              clickedNode.att_method +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Penelitian selanjutnya</td>" +
+              "<td>" +
+              clickedNode.att_future +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Gap penelitian</td>" +
+              "<td>" +
+              clickedNode.att_gaps +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Artikel lengkap PDF</td>" +
+              "<td><a href='" +
+              clickedNode.att_url +
+              "' target='_blank'>Buka " +
+              clickedNode.label +
+              "</a></td>" +
+              "</tr>" +
+              "</table>";
+          }
+
+          function showEdge(clickedEdge) {
+            // 1. Create a new XMLHttpRequest instance
+            
+            var url = new URL(window.location.href);
+              var c = url.searchParams.get("id");
+              console.log(c);
+              const xhr = new XMLHttpRequest();
+
+              // 2. Define the request method and URL
+              xhr.open('POST', 'https://sre.realityideas.com/save-knowledge-content', true);
+
+              // 3. Set request headers (if needed)
+              xhr.setRequestHeader('Content-Type', 'application/json');
+
+              // 4. Define the response handler
+              xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                  // Handle the server response
+                  console.log(xhr.responseText);
+                }
+              };
+
+              // 5. Send the request with data payload
+              const data = JSON.stringify({user_id:c, action: clickedEdge.from + " - " + clickedEdge.to + " | " + clickedEdge.color.color, text: "clicked Edge" });
+              xhr.send(data);
+            // console.log("API node click: ", clickedNode.label);
+            console.log("API edge click: ", clickedEdge.from + " - " + clickedEdge.to + " | " + clickedEdge.color.color);
+
+            const node_form = nodes.get(clickedEdge.from);
+            const node_to = nodes.get(clickedEdge.to);
+            console.log(clickedEdge.color.color);
+            document.getElementById("popup-event").innerHTML =
+              "<table border='1' style='font-size:11px'>" +
+              "<tr style='text-align:center; font-style:bold'>" +
+              "<td colspan='2'>" +
+              node_form.label +
+              "</td>" +
+              "<td>Hubungan/Relasi</td>" +
+              "<td colspan='2'>" +
+              node_to.label +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Judul</td>" +
+              "<td>" +
+              node_form.title +
+              "</td>" +
+              "<td rowspan='8' style='text-align: center; color:"+ clickedEdge.color.color+"'>" +
+              clickedEdge.label +
+              "</td>" +
+              "<td>Judul</td>" +
+              "<td>" +
+              node_to.title +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Tujuan</td>" +
+              "<td>" +
+              node_form.att_goal +
+              "</td>" +
+              "<td>Tujuan</td>" +
+              "<td>" +
+              node_to.att_goal +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Latar Belakang</td>" +
+              "<td>" +
+              node_form.att_background +
+              "</td>" +
+              "<td>Latar Belakang</td>" +
+              "<td>" +
+              node_to.att_background +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Metodologi</td>" +
+              "<td>" +
+              node_form.att_method +
+              "</td>" +
+              "<td>Metodologi</td>" +
+              "<td>" +
+              node_to.att_method +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Penelitian kedepan</td>" +
+              "<td>" +
+              node_form.att_future +
+              "</td>" +
+              "<td>Penelitian kedepan</td>" +
+              "<td>" +
+              node_to.att_future +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Gap penelitian</td>" +
+              "<td>" +
+              node_form.att_gaps +
+              "</td>" +
+              "<td>Gap penelitian</td>" +
+              "<td>" +
+              node_to.att_gaps +
+              "</td>" +
+              "</tr>" +
+              "<tr>" +
+              "<td>Artikel PDF</td>" +
+              "<td><a href='" +
+              node_form.att_url +
+              "' target='_blank'>Buka " +
+              node_form.label +
+              "</a></td>" +
+              "<td>Artikel PDF</td>" +
+              "<td><a href='" +
+              node_to.att_url +
+              "' target='_blank'>Buka " +
+              node_to.label +
+              "</a></td>" +
+              "</tr>" +
+              "</table>";
+            console.log(clickedEdge.from);
+            console.log(clickedEdge.to);
+          }
+        });
+      }
+
+      const nodes = new vis.DataSet([
+       
+        {
+          id: 3,
+          label: "ARTIKEL-01",
+          title:
+            "PENGARUH PEMANFAATAN MIND MAPPING MENGGUNAKAN XMIND TERHADAP HASIL BELAJAR ADMINISTRASI SISTEM JARINGAN KELAS XI TKJ_13",
+          att_goal:
+            "Mengetahui pengaruh pemanfaatan mind mapping menggunakan XMind terhadap hasil belajar siswa pada mata pelajaran Administrasi Sistem Jaringan di kelas XI TKJ.",
+          att_method:
+            "Metode penelitian yang digunakan dalam dokumen ini adalah metode eksperimen.",
+          att_background: "Permasalahan dalam penelitian ini ialah fakta yang ditemukan di lapangan yakni di SMK N 04 Payakumbuh, masih banyaknya siswa kelas XI TKJ yang memperoleh hasil belajar yang rendah, khususnya dalam bidang kemampuan kognitif. Di sisi lain, proses pembelajaran masih didominasi guru dan kurang bervariasinya model pengajaran yang diberikan oleh guru serta kurangnya pemanfaatan media pembelajaran yang lebih kreatif sehingga mengakibatkan kurang sikap aktifnya siswa selama proses pembelajaran.",
+          att_future: "Penelitian lebih lanjut dapat dilakukan untuk mengeksplorasi penggunaan mind mapping dengan Xmind pada mata pelajaran atau konteks pendidikan lainnya.",
+          att_gaps: "Penelitian ini terbatas pada satu sekolah (SMK N 04 Payakumbuh) dan satu kelas (XI TKJ), sehingga hasilnya mungkin tidak dapat digeneralisasi ke konteks yang lebih luas.",
+          att_url: "https://sre.realityideas.com/pdf2/03.pdf",
+        },
+        {
+          id: 5,
+          label: "ARTIKEL-02",
+          title:
+            "PENGARUH MEDIA PEMBELAJARAN VISUAL DAN AUDIOVISUAL SERTA GAYA KOGNITIF TERHADAP HASIL BELAJAR SISWA",
+          att_goal:
+            "Penelitian ini bertujuan untuk mengetahui perbedaan hasil belajar siswa berdasarkan aspek kognitif ditinjau dari penggunaan media pembelajaran.",
+          att_method:
+            "Metodologi penelitian yang digunakan dalam dokumen ini adalah metode eksperimen.",
+          att_background:
+            "Dokumen ini tidak menyertakan bagian latar belakang secara eksplisit. Namun, berdasarkan judulnya, penelitian ini kemungkinan besar berfokus pada bagaimana media pembelajaran visual dan audiovisual, serta gaya kognitif siswa, mempengaruhi hasil belajar mereka. Penelitian ini mungkin dilatarbelakangi oleh kebutuhan untuk memahami efektivitas berbagai jenis media pembelajaran dalam meningkatkan hasil belajar siswa dan bagaimana faktor individual seperti gaya kognitif dapat mempengaruhi proses pembelajaran.",
+          att_future: "Penelitian lebih lanjut dapat mengeksplorasi faktor-faktor lain yang mungkin mempengaruhi interaksi ini.",
+          att_gaps: "Tidak terdapat interaksi antara hasil belajar siswa berdasarkan aspek kognitif ditinjau dari penggunaan media pembelajaran dan gaya kognitif.",
+          att_url: "https://sre.realityideas.com/pdf2/05.pdf",
+        },
+        {
+          id: 8,
+          label: "ARTIKEL-03",
+          title:
+            "PENGARUH PENGGUNAAN MEDIA PEMBELAJARAN POWER POINT DAN SCRATCH PADA MATA PELAJARAN INFORMATIKA MATERI SISTEM KOMPUTER",
+          att_goal:
+            "Tujuan dari penelitian ini adalah untuk menganalisis pengaruh penggunaan media pembelajaran PowerPoint dan Scratch.",
+          att_method:
+            "gathered quantitative and qualitative data from graduate students and faculty in Engineering",
+          att_background:
+            " penelitian ini kemungkinan besar membahas tentang bagaimana penggunaan media pembelajaran seperti PowerPoint dan Scratch dapat mempengaruhi proses pembelajaran dalam mata pelajaran informatika, khususnya pada materi sistem komputer. Penelitian ini mungkin bertujuan untuk mengeksplorasi efektivitas kedua media tersebut dalam meningkatkan pemahaman siswa terhadap materi yang diajarkan.",
+          att_future: "Implikasi dari hasil penelitian yang menunjukkan bahwa kedua media memiliki dampak yang setara dapat menjadi dasar untuk penelitian lebih lanjut.",
+          att_gaps: "Penelitian ini terbatas pada konteks penggunaan media PowerPoint dan Scratch di kelas VII MTSS Islamiyah Pontianak.",
+          att_url: "https://sre.realityideas.com/pdf2/08.pdf",
+        },
+        {
+          id: 10,
+          label: "ARTIKEL-04",
+          title:
+            "PENGGUNAAN GOOGLE CLASSROOM SEBAGAI PENGEMBANGAN KELAS VIRTUAL DALAM KETERAMPILAN PEMECAHAN MASALAH TOPIK KINEMATIKA PADA MAHASISWA JURUSAN SISTEM KOMPUTER",
+          att_goal:
+            "Penelitian ini bertujuan untuk mengembangkan kelas virtual menggunakan Google Classroom.",
+          att_method:
+            "Penelitian ini menggunakan pendekatan kuantitatif dengan metode eksperimen.",
+          att_background:
+            "Dokumen ini membahas tentang penggunaan Google Classroom sebagai alat untuk mengembangkan kelas virtual.",
+          att_future: "fuPenelitian di masa depan dapat mengeksplorasi penggunaan platform lain atau memperluas topik pembelajaran di luar gerak parabola.ture",
+          att_gaps: "Penelitian ini terbatas pada satu kelas jurusan sistem komputer dan hanya menggunakan Google Classroom sebagai alat bantu.",
+          att_url: "https://sre.realityideas.com/pdf2/10.pdf",
+        },
+        {
+          id: 11,
+          label: "ARTIKEL-05",
+          title:
+            "EFEKTIVITAS PEMBELAJARAN MATERI BERBASIS MACROMEDIA FLASH DAN MICROSOFT POWERPOINT PADA MATA PELAJARAN DESAIN GRAFIS",
+          att_goal:
+            "Mengetahui efektivitas pembelajaran materi berbasis Macromedia Flash dan Microsoft PowerPoint.",
+          att_method:
+            "Penelitian ini menggunakan metode eksperimen dengan desain penelitian pretest-posttest control group design.",
+          att_background:
+            "Dokumen ini membahas tentang efektivitas penggunaan media pembelajaran berbasis teknologi.",
+          att_future: "Penelitian di masa depan dapat mengeksplorasi efektivitas alat-alat teknologi yang lebih modern.",
+          att_gaps: "Penelitian ini terbatas pada penggunaan Macromedia Flash dan Microsoft PowerPoint dalam konteks pembelajaran desain grafis.",
+          att_url: "https://sre.realityideas.com/pdf2/11.pdf",
+        },
+        {
+          id: 15,
+          label: "ARTIKEL-6",
+          title:
+            "PENGARUH PENGGUNAAN YOUTUBE TERHADAP MOTIVASI BELAJAR DAN HASIL BELAJAR MAHASISWA",
+          att_goal:
+            "mendeskripsikan motivasi belajar mahasiswa yang menggunakan Youtube",
+          att_method:
+            "eksperimen",
+          att_background:
+            "pengaruh media digital seperti Youtube",
+          att_future: "future",
+          att_gaps: "terbatas pada mata kuliah Perancangan Basis Data",
+          att_url: "https://sre.realityideas.com/pdf2/15.pdf",
+        },
+      ]);
+
+      const edges = new vis.DataSet([
+    
+    {
+        from: 3,
+        to: 5,
+        relation: "method",
+        arrows: "to",
+        color: { color: "green" },
+        label: "Kedua penelitian menggunakan metode eksperimen.",
+        font: { color: "green", background: "white" },
+    },
+    {
+        from: 3,
+        to: 8,
+        relation: "method",
+        arrows: "to",
+        color: { color: "green" },
+        label: "Kedua penelitian menggunakan metode eksperimen.",
+        font: { color: "green", background: "white" },
+    },
+    {
+        from: 3,
+        to: 11,
+        relation: "method",
+        arrows: "to",
+        color: { color: "green" },
+        label: "Kedua penelitian menggunakan metode eksperimen.",
+        font: { color: "green", background: "white" },
+    },
+    {
+        from: 5,
+        to: 8,
+        relation: "method",
+        arrows: "to",
+        color: { color: "green" },
+        label: "Kedua penelitian menggunakan metode eksperimen.",
+        font: { color: "green", background: "white" },
+    },
+    {
+        from: 5,
+        to: 11,
+        relation: "method",
+        arrows: "to",
+        color: { color: "green" },
+        label: "Kedua penelitian menggunakan metode eksperimen.",
+        font: { color: "green", background: "white" },
+    },
+    {
+        from: 10,
+        to: 11,
+        relation: "background",
+        arrows: "to",
+        color: { color: "blue" },
+        label: "Kedua penelitian membahas tentang penggunaan media digital dalam pendidikan.",
+        font: { color: "blue", background: "white" },
+    },
+    {
+        from: 10,
+        to: 15,
+        relation: "background",
+        arrows: "to",
+        color: { color: "blue" },
+        label: "Kedua penelitian membahas tentang penggunaan media digital dalam pendidikan.",
+        font: { color: "blue", background: "white" },
+    },
+    {
+        from: 11,
+        to: 15,
+        relation: "background",
+        arrows: "to",
+        color: { color: "blue" },
+        label: "Kedua penelitian membahas tentang penggunaan media digital dalam pendidikan.",
+        font: { color: "blue", background: "white" },
+    },
+    {
+        from: 3,
+        to: 5,
+        relation: "objective",
+        arrows: "to",
+        color: { color: "red" },
+        label: "Kedua penelitian ini meneliti pengaruh media pembelajaran terhadap hasil belajar siswa.",
+        font: { color: "red", background: "white" },
+    },
+    {
+        from: 3,
+        to: 8,
+        relation: "objective",
+        arrows: "to",
+        color: { color: "red" },
+        label: "Kedua penelitian ini meneliti pengaruh media pembelajaran terhadap hasil belajar siswa.",
+        font: { color: "red", background: "white" },
+    },
+    {
+        from: 5,
+        to: 8,
+        relation: "objective",
+        arrows: "to",
+        color: { color: "red" },
+        label: "Kedua penelitian ini meneliti pengaruh media pembelajaran terhadap hasil belajar siswa.",
+        font: { color: "red", background: "white" },
+    },
+
+      ]);
+
+      /**
+       * filter values are updated in the outer scope.
+       * in order to apply filters to new values, DataView.refresh() should be called
+       */
+      
+      const nodesFilterValues = {
+        3: true,
+        5: true,
+        8: true,
+        10: true,
+        11: true,
+        15: true,
+      }
+
+      const edgesFilterValues = {
+        objective: false,
+        methods: false,
+        background: false,
+      };
+
+      /*
+        filter function should return true or false
+        based on whether item in DataView satisfies a given condition.
+      */
+
+      const nodesFilter = (node) => {
+        return nodesFilterValues[node.id];
+      };
+
+      const edgesFilter = (edge) => {
+        return edgesFilterValues[edge.relation];
+      };
+
+      const nodesView = new vis.DataView(nodes, { filter: nodesFilter });
+      const edgesView = new vis.DataView(edges, { filter: edgesFilter });
+
+      edgeFilters.forEach((filter) =>
+        filter.addEventListener("change", (e) => {
+          const { value, checked } = e.target;
+          edgesFilterValues[value] = checked;
+          edgesView.refresh();
+          if(checked) {
+            // 1. Create a new XMLHttpRequest instance
+            
+            var url = new URL(window.location.href);
+              var c = url.searchParams.get("id");
+              console.log(c);
+              const xhr = new XMLHttpRequest();
+
+              // 2. Define the request method and URL
+              xhr.open('POST', 'https://sre.realityideas.com/save-knowledge-content', true);
+
+              // 3. Set request headers (if needed)
+              xhr.setRequestHeader('Content-Type', 'application/json');
+
+              // 4. Define the response handler
+              xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                  // Handle the server response
+                  console.log(xhr.responseText);
+                }
+              };
+
+              // 5. Send the request with data payload
+              const data = JSON.stringify({user_id:c, action: value, text: "Hubungan change: " });
+              xhr.send(data);
+            console.log("API hubungan change: ", value);
+          }
+        })
+      );
+
+      nodeFilters.forEach((filter) =>
+        filter.addEventListener("change", (e) => {
+          const { value, checked } = e.target;
+          nodesFilterValues[value] = checked;
+          nodesView.refresh();
+          if(checked) {
+            // 1. Create a new XMLHttpRequest instance
+            
+            var url = new URL(window.location.href);
+              var c = url.searchParams.get("id");
+              console.log(c);
+              const xhr = new XMLHttpRequest();
+
+              // 2. Define the request method and URL
+              xhr.open('POST', 'https://sre.realityideas.com/save-knowledge-content', true);
+
+              // 3. Set request headers (if needed)
+              xhr.setRequestHeader('Content-Type', 'application/json');
+
+              // 4. Define the response handler
+              xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                  // Handle the server response
+                  console.log(xhr.responseText);
+                }
+              };
+
+              // 5. Send the request with data payload
+              const data = JSON.stringify({user_id:c, action: value, text: "Node change: " });
+              xhr.send(data);
+            console.log("API node change: ", value);
+          }
+        })
+      );
+
+      startNetwork({ nodes: nodesView, edges: edgesView });
+    </script>
+  </body>
+</html>
